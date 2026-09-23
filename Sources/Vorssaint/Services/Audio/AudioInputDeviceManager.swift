@@ -13,7 +13,7 @@ struct MixerInputDevice: Identifiable, Equatable {
     fileprivate let audioObjectID: AudioObjectID
 }
 
-/// Keeps Vorssaint's preferred microphone in sync with macOS' global input.
+/// Keeps MacVault's preferred microphone in sync with macOS' global input.
 /// This is intentionally separate from the per-app output mixer: selecting a
 /// microphone changes the system default input, without taps or audio capture.
 final class AudioInputDeviceManager: ObservableObject {

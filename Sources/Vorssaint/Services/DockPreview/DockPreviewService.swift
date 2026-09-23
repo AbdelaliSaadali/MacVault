@@ -580,7 +580,7 @@ final class DockPreviewService: ObservableObject {
         }
 
         if let pendingHover,
-           pendingHover.iconFrame.insetBy(dx: -6, dy: -6).contains(point) {
+           pendingHover.iconFrame.contains(point) {
             return
         }
 
@@ -809,11 +809,7 @@ final class DockPreviewService: ObservableObject {
         // still in the Dock edge band, keep the hit that armed the timer rather
         // than cancelling the preview on a transient miss.
         let appKitPoint = appKitPoint(fromAX: point)
-        if isNearDock(appKitPoint),
-           pointMatchesDockIconLongAxis(appKitPoint,
-                                        iconFrame: initialHit.iconFrame,
-                                        orientation: initialHit.preferences.orientation,
-                                        margin: 8) {
+        if initialHit.iconFrame.contains(appKitPoint) {
             beginSession(initialHit)
             return
         }
@@ -1596,6 +1592,14 @@ final class DockPreviewService: ObservableObject {
                                     axPoint: CGPoint,
                                     windows: [MouseAppExceptionSupport.Window],
                                     dockPID: pid_t) -> Bool {
+        // MacVault: opening a preview requires a real Dock-icon hover.
+        // The larger near-Dock band is only a performance prefilter and must
+        // never be sufficient to trigger a preview by itself.
+        guard hit.iconFrame.contains(appKitPoint) else {
+            trace("dockHit rejected=outside-icon-frame", dedupe: true)
+            return false
+        }
+
         // Keep the strict ownership test when the Dock still uses the expected
         // CoreGraphics layer.
         if DockClickSupport.dockOwnsPoint(
@@ -1614,7 +1618,7 @@ final class DockPreviewService: ObservableObject {
         // the transparent/overlaid Dock. CGWindowList is not a reliable
         // ownership witness for every modern Dock composition.
         for window in windows where window.alpha > 0 && window.processID == dockPID {
-            if window.frame.insetBy(dx: -12, dy: -12).contains(axPoint) {
+            if window.frame.contains(axPoint) {
                 trace("dockHit plausible=dock-window", dedupe: true)
                 return true
             }
@@ -1625,8 +1629,7 @@ final class DockPreviewService: ObservableObject {
         // long axis. Its normalized frame is therefore the strongest fallback
         // witness when WindowServer exposes the desktop/app below the Dock
         // instead of a separate Dock window.
-        let iconWitness = isNearDock(appKitPoint)
-            && hit.iconFrame.insetBy(dx: -16, dy: -16).contains(appKitPoint)
+        let iconWitness = hit.iconFrame.contains(appKitPoint)
         if iconWitness {
             trace("dockHit plausible=normalized-icon", dedupe: true)
         }

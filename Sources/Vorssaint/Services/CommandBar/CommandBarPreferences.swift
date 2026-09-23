@@ -13,7 +13,7 @@ enum CommandBarSource: String, CaseIterable, Identifiable {
     case windows
     case quitApps
     case settingsPages
-    /// The Mac's own Settings panes, which are not Vorssaint's and can be
+    /// The Mac's own Settings panes, which are not MacVault's and can be
     /// switched off on their own.
     case macSettings
     case snippets
@@ -120,7 +120,7 @@ enum CommandBarPreferences {
 
     /// What a kind of row is worth before a single letter of it is read.
     ///
-    /// What this Mac holds (the apps, Vorssaint's own actions, the Settings
+    /// What this Mac holds (the apps, MacVault's own actions, the Settings
     /// pages) is what people mean; the menu commands of whatever app happens
     /// to be in front are borrowed, and one submenu of history can hold a
     /// dozen rows with the same words in them. So a borrowed row sits under an

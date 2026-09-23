@@ -31,11 +31,13 @@ trap 'exit 1' INT TERM HUP
 DEV=0
 INSTALL=0
 TEST=0
+FAST=0
 for arg in "$@"; do
     case "$arg" in
         --dev)     DEV=1 ;;
         --install) INSTALL=1 ;;
         --test)    TEST=1 ;;
+        --fast)    FAST=1 ;;
     esac
 done
 
@@ -47,12 +49,17 @@ if (( DEV )); then
     APP_OPTIMIZATION_FLAGS=(-Onone)
     BUILD_CONFIGURATION="debug"
 else
-    APP_NAME="Vorssaint"
+    APP_NAME="MacVault"
     EXECUTABLE="Vorssaint"
     APP_BUNDLE_ID="com.vorssaint.utils"
     BUILD_VARIANT_FLAGS=()
-    APP_OPTIMIZATION_FLAGS=(-O)
-    BUILD_CONFIGURATION="release"
+    if (( FAST )); then
+        APP_OPTIMIZATION_FLAGS=(-Onone)
+        BUILD_CONFIGURATION="fast"
+    else
+        APP_OPTIMIZATION_FLAGS=(-O)
+        BUILD_CONFIGURATION="release"
+    fi
 fi
 FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Build for the host architecture by default so the same source tree works on
@@ -393,7 +400,7 @@ fi
 
 echo "▸ Compiling ($BUILD_CONFIGURATION) against $(basename "$SDK")…"
 APP_SOURCES=(Sources/Vorssaint/**/*.swift)
-if (( DEV )); then
+if (( DEV || FAST )); then
     APP_OBJECT_DIR="build/objects/$EXECUTABLE"
     mkdir -p build "$APP_OBJECT_DIR"
     APP_OUTPUT_FILE_MAP="$APP_OBJECT_DIR/output-file-map.json"
@@ -424,8 +431,17 @@ swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" "${BUILD_VARIAN
 
 echo "▸ Generating app icon…"
 swift Tools/MakeIcon.swift build/AppIcon.iconset
+
+# MacVault custom branding: override generated Vorssaint assets.
+cp Resources/AppIcon.icns build/AppIcon.icns
+cp Resources/MenuBarIcon.png build/MenuBarIcon.png
+cp Resources/MenuBarIcon@2x.png build/MenuBarIcon@2x.png
+cp Resources/BrandMark.png build/BrandMark.png
+
 xattr -c -r build/AppIcon.iconset build/AppIcon.icns build/MenuBarIcon.png build/MenuBarIcon@2x.png build/BrandMark.png 2>/dev/null || true
-ACTOOL_BIN="$(xcrun --find actool 2>/dev/null || true)"
+# MacVault uses the custom AppIcon.icns instead of the old Vorssaint adaptive icon.
+rm -f build/Assets.car
+ACTOOL_BIN=""
 ICON_TMP="$(mktemp -d)"
 ADAPTIVE_SKIP=""
 if [[ -z "$ACTOOL_BIN" ]]; then

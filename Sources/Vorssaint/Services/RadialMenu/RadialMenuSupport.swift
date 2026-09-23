@@ -446,7 +446,7 @@ enum RadialMenuMediaKey: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Now Playing opens Vorssaint's metadata card rather than posting a key.
+    /// Now Playing opens MacVault's metadata card rather than posting a key.
     var auxKeyType: Int32? {
         switch self {
         case .playPause: return 16
